@@ -28,15 +28,9 @@ let server = require('http').Server(app);
 });*/
 const httpPort = process.env.PORT || 3001;
 // Server port
-const mysqlConnection = mysql.createConnection({
-    host: 'localhost',
-    port: '10003',
-    user: 'root',
-    password: 'root',
-    database: 'resturant_test',
-    multipleStatements : true
-});
-
+const mysqlConnection = mysql.createConnection(
+    process.env.CLEARDB_DATABASE_URL
+);
 
 // URL to api.
 //let apiURL = `http://localhost:${httpPort}/api/v1`
