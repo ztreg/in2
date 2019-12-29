@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <% include ./partials/header %>
+  </head>
+  <body> 
+    <table>
+    <tr>
+      <th>Name</th>
+      <th>Location</th>
+      <th>Type</td>
+    </tr>
+      <% for(let i = 0; i < allRestaurants.length; i++) { %>
+          <tr>
+            <td><%= allRestaurants[i].restaurant_Name %></td>
+            <td><%= allRestaurants[i].restaurant_Location %></td>
+            <td><%= allRestaurants[i].restaurant_Type %></td>
+          </tr>
+          <%  } %>
+    </table>
+   
+  </body>
+</html>

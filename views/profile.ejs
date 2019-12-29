@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <% include ./partials/header %>
+        <title>profil</title>
+</head>
+
+<body>
+  <!-- Shows loggied in users view of pages -->
+        <div class="container-fluid niceColors3">
+                <% include ./partials/logout %>
+                <div class="row">
+                    <div class="col-lg-3 col-sm-6 niceColors2 text-center center">
+                     
+                     <div class="card niceColors">
+                             <img class="card-img-top" src="<%= data[0].profilePicturePath%>" 
+                             alt="Profile picture" class="profilePicture">
+                             <div class="card-body">
+                               <h4 class="card-title">Name: <%= data[0].username %></h4>
+                               <h5 class="card-text" >Email: <%= data[0].email %> </h5>
+                               <a href="edituser/<%= data[0].username %>" class="btn btn-info">Edit user</a><br>
+                               <a href="deleteuser/<%= data[0].username %>" onclick="return confirm('Are you sure you want to delete your profile?')" class="btn btn-danger">Delete user</a>
+                             </div>
+                           
+                           </div>
+                           <a href="/" class="btn btn-primary">Back to chatrooms</a>
+                    </div>
+            
+                </div>
+            </div>
+
+
+</body>
+
+</html>
