@@ -93,11 +93,11 @@ app.get('/', (req, res) => {
 });*/
 
 
-// make it possible to use database connection in requests.
+/*// make it possible to use database connection in requests.
 app.use(function (req, res, next) {
     req.db = db;
     next();
-});
+});*/
 
 // create route for our api
 app.use('/api/v1', apiRouter);

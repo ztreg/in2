@@ -2,22 +2,30 @@
 <html>
   <head>
     <% include ./partials/header %>
+    <% include ./partials/snow %>
   </head>
   <body> 
-    <table>
-    <tr>
-      <th>Name</th>
-      <th>Location</th>
-      <th>Type</td>
-    </tr>
-      <% for(let i = 0; i < allRestaurants.length; i++) { %>
+    <div class="container-fluid">
+      <div class="row">            
+        <table class="col-sm-4">
           <tr>
-            <td><%= allRestaurants[i].restaurant_Name %></td>
-            <td><%= allRestaurants[i].restaurant_Location %></td>
-            <td><%= allRestaurants[i].restaurant_Type %></td>
+            <th>Name</th>
+            <th>Location</th>
+            <th>Type</th>
+            <th>Action</th>
+            <th>Action</th>
           </tr>
-          <%  } %>
-    </table>
-   
+            <% for(let i = 0; i < allRestaurants.length; i++) { %>
+                <tr>
+                  <td><%= allRestaurants[i].restaurant_Name %></td>
+                  <td><%= allRestaurants[i].restaurant_Location %></td>
+                  <td><%= allRestaurants[i].restaurant_Type %></td>
+                  <td><a href="" class="btn-info">Edit</a></td>
+                  <td> <a href="" onclick="return confirm('Are you sure you want to delete your profile?')" class="btn-danger">Delete</a></td>
+                </tr>
+                <%  } %>
+          </table>
+     </div>
+    </div>
   </body>
 </html>
