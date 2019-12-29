@@ -99,9 +99,10 @@ app.use(function (req, res, next) {
     next();
 });*/
 
+/*
 // create route for our api
 app.use('/api/v1', apiRouter);
-
+*/
 
 
 /*mysqlConnection.end((err) => {
