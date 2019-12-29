@@ -26,7 +26,7 @@ let server = require('http').Server(app);
 /*require('dotenv').config({
     path: __dirname + '/.env'
 });*/
-const httpPort = process.env.PORT || 3001
+const httpPort = process.env.PORT || 3001;
 // Server port
 const mysqlConnection = mysql.createConnection({
     host: 'localhost',
