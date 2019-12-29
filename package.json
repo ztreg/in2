@@ -1,9 +1,9 @@
 {
-  "name": "grupp-d-slack",
+  "name": "in2",
   "version": "0.0.0",
-  "private": true,
+  "private": false,
   "config": {
-    "port": "8080"
+    "port": "3001"
   },
   "scripts": {
     "start": "node app.js"
