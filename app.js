@@ -23,9 +23,10 @@ let app = express();
 
 let server = require('http').Server(app);
 //load environment configs from file .env 
-/*require('dotenv').config({
+require('dotenv').config({
     path: __dirname + '/.env'
-});*/
+});
+console.log(process.env.CLEARDB_DATABASE_URL);
 const httpPort = process.env.PORT || 3001;
 // Server port
 const mysqlConnection = mysql.createConnection(
@@ -65,9 +66,7 @@ app.get('/', (req, res) => {
         if(err) throw err;
        
         rows.forEach( (row) => {
-            //console.log(`${row.restaurant_Name}` + " " +  `${row.restaurant_Location}`);
             dataToSend.push(row);
-            
         });
         console.log(dataToSend[0].restaurant_Location);
         res.render('./allRestaurants.ejs', {
