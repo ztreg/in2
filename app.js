@@ -26,7 +26,9 @@ let server = require('http').Server(app);
 require('dotenv').config({
     path: __dirname + '/.env'
 });
+
 console.log(process.env.CLEARDB_DATABASE_URL);
+
 const httpPort = process.env.PORT || 3001;
 // Server port
 const mysqlConnection = mysql.createConnection(
@@ -49,7 +51,7 @@ app.use(express.urlencoded({
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 mysqlConnection.connect((err) => {
-    //console.log(mysqlConnection);
+    console.log(mysqlConnection);
     if(err){
       console.log('Error connecting to Db');
       return;
@@ -60,8 +62,9 @@ mysqlConnection.connect((err) => {
 // Root URL
 app.get('/', (req, res) => {
     let dataToSend = [];
+   
     mysqlConnection.query(`SELECT * ` +
-    ` FROM restaurants `,(err,rows) => {
+    `FROM restaurants WHERE`,(err,rows) => {
         
         if(err) throw err;
        
@@ -76,6 +79,8 @@ app.get('/', (req, res) => {
 
     
 });
+
+
 /*mysqlConnection.query(`SELECT * ` +
 ` FROM restaurants `,(err,rows) => {
     if(err) throw err;
