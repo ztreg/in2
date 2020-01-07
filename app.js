@@ -72,34 +72,38 @@ mysqlConnection.connect((err) => {
     console.log('Connection established at port ' + httpPort);
 
 });
-// Root URL
-app.get('/all', (req, res) => {
-    let test = req.userData;
-    console.log(test);
+// al URL
+app.get('/all', checkAuth, (req, res) => {
+    let currentUser = req.userData.username;
     let dataToSend = [];
     let raitingArray = [];
-    
+ 
     mysqlConnection.query(`SELECT * ` +
     `FROM restaurants`,(err,rows) => {   
         if(err) throw err;
         rows.forEach( (row) => {
             dataToSend.push(row);
         });
-
         //Find all reviews(raitings) with the same id that the restaurant has and add it to a array
         //After that, send the array to the view
         for(let i = 0; i < dataToSend.length; i++) {
-            
             let AVGrate = "SELECT AVG(reviewRaiting) as 'AverageRaiting' FROM reviews WHERE restaurant_ID = '"+dataToSend[i].restaurant_ID+"';"
              mysqlConnection.query(AVGrate, function (err, result) {
                 if (err) throw err;
                 raitingArray.push(result[0].AverageRaiting);
-
                 if(dataToSend[i+1] == null) {
-                    res.render('./allRestaurants.ejs', {
-                        "allRestaurants": dataToSend,
-                        "raitings" : raitingArray
-                    }); 
+                    if(currentUser.username == "admin") {
+                        res.render('./allRestaurantsAdmin.ejs', {
+                            "allRestaurants": dataToSend,
+                            "raitings" : raitingArray
+                        }); 
+                    } 
+                    else {
+                        res.render('./allRestaurants.ejs', {
+                            "allRestaurants": dataToSend,
+                            "raitings" : raitingArray
+                        }); 
+                    } 
                 }
             }); 
         }         
@@ -116,9 +120,7 @@ app.get('/newAccount', (req, res) => {
 
 app.post('/login', (req, res) => {
     let username = req.body.userName;
-    console.log("letar efter " + username);
     let password = req.body.password;
-    console.log("letar efter " + password);
     let userAccess = 0;
     mysqlConnection.query(`SELECT user_ID, user_Name, user_Password FROM users`, (err,rows) => {   
         if(err) throw err;
@@ -126,7 +128,6 @@ app.post('/login', (req, res) => {
             //console.log(row.user_Name);
            if(username == row.user_Name) {
             userAccess++;
-            console.log("rätt username och vi plussar useracess som nu är 1");
            } else {
               console.log("fel username");
            }
@@ -135,11 +136,8 @@ app.post('/login', (req, res) => {
         rows.forEach( (db) => {
            bcrypt.compare(password, db.user_Password, (err, result) => {
             if(result) {
-                console.log(process.env.JWT_KEY);
                 userAccess++;
-                console.log("rätt password och vi plussar useracess som nu är " + userAccess);
                 if(userAccess == 2) {
-                    console.log("u are now logged in");
                     const token = jwt.sign({
                         username : username,
                         userID : db.user_ID
@@ -149,22 +147,23 @@ app.post('/login', (req, res) => {
                         expiresIn : "1h"
                     }
                     );
-                    let stringyy = "Bearer " + token;
-                    return res.status(200).json({
+                    //let stringyy = "Bearer " + token;
+                    /*return res.status(200).json({
                         message : "ok it works",
                         token : stringyy
-                    });
-                    //res.redirect('./addRestaurant');
+                    });*/
+                    res.cookie('token', token, {maxAge: 500 * 1000, httpOnly: true});
+                    res.redirect('/addRestaurant');
                    
                          
                 } else if(userAccess !== 2) {
-                    console.log("ops did not find you in this row"); 
+                    console.log("ops did not find you in the database"); 
                     res.sendStatus(401);
                 }
             }
             if(err) {
                 res.sendStatus(401);
-                console.log("error");
+                console.log("ops did not find you in the database");
             }
             });
          
@@ -214,7 +213,10 @@ app.post('/signup', (req, res) => {
     });
     
 });
-
+app.get('/logout', (req, res) => {
+    res.clearCookie('token', {path: '/'});
+    res.redirect('/');
+});
 app.post('/deleteUser/:userID', checkAuth, (req, res) => {
     let userToDelete = req.params.userID;
     console.log(userToDelete);
@@ -229,7 +231,8 @@ app.post('/deleteUser/:userID', checkAuth, (req, res) => {
 
 
 //Get Review site
-app.get('/reviewRestaurant', (req, res) => {
+app.get('/reviewRestaurant', checkAuth, (req, res) => {
+   console.log(req.userData);
     let dataToSend = [];
 
     mysqlConnection.query(`SELECT * ` +
@@ -245,15 +248,17 @@ app.get('/reviewRestaurant', (req, res) => {
     });
 });
 
-app.get('/addRestaurant', (req, res)=> {
+app.get('/addRestaurant', checkAuth, (req, res)=> {
+    console.log(req.cookies['token']);
+ 
     res.render('./addRestaurant.ejs');
 });
 
-app.post('/addRestaurant', (req, res)=>{
+app.post('/addRestaurant', checkAuth, (req, res)=>{
+    console.log(req.cookies);
     let resname = req.body.resname;
     let reslocation = req.body.reslocation;
     let restype = req.body.restype;
-
 
     let sql = "INSERT INTO `restaurants` (`restaurant_Name`, `restaurant_Location`, `restaurant_Type`) VALUES ("+mysqlConnection.escape(resname)+", "+mysqlConnection.escape(reslocation)+", "+mysqlConnection.escape(restype)+")";
     mysqlConnection.query(sql, function (err, result) {
@@ -266,7 +271,7 @@ app.post('/addRestaurant', (req, res)=>{
 });
     
 //delete restaurant and reviews related to the restaurant
-app.post("/deleteRestaurant/:id", (req, res) => {
+app.post("/deleteRestaurant/:id", checkAuth, (req, res) => {
     let idToDelete = req.params.id;
     console.log(idToDelete);
 
@@ -316,8 +321,8 @@ app.post('/editRestaurant/:id', checkAuth, (req, res) => {
 });
 
 //Submit the raitings to reviews table
-app.post('/submitRaitings/', (req, res) => {
-    //let idToEdit = req.params.id;
+app.post('/submitRaitings/', checkAuth, (req, res) => {
+    let currentUser = req.userData.userID;
     let chosenRestaurant = req.body.chosenRestaurant;
     let reviewRaiting = req.body.reviewRaiting;
     let reviewText = req.body.reviewText;
@@ -326,13 +331,9 @@ app.post('/submitRaitings/', (req, res) => {
     let sql = "SELECT `restaurant_ID` FROM `restaurants` WHERE `restaurant_Name` = '"+chosenRestaurant+"';"
     mysqlConnection.query(sql, function (err, result) {
         if (err) throw err;
-        console.log(result[0]);
         restID = result[0].restaurant_ID;
-        console.log(restID);
-        console.log("hittade id för namn med ID " + restID);
-
         //Now we can add the review with the restaurantID
-        let sql2 = "INSERT INTO `reviews` (`reviewRestName`, `reviewText`, `reviewRaiting`, `restaurant_ID`) VALUES ('"+chosenRestaurant+"', '"+reviewText+"', '"+reviewRaiting+"', '"+restID+"')";
+        let sql2 = "INSERT INTO `reviews` (`reviewRestName`, `reviewText`, `reviewRaiting`, `restaurant_ID`, `user_ID`) VALUES ('"+chosenRestaurant+"', '"+reviewText+"', '"+reviewRaiting+"', '"+restID+"', '"+currentUser+"')";
         mysqlConnection.query(sql2, function (err, result) {
             if (err) throw err;
             console.log("la till review för restaurang med id " + restID);
@@ -341,30 +342,42 @@ app.post('/submitRaitings/', (req, res) => {
     });
 });
 
+//Ska inte behöva vara inloggad som admin för att se andras reviews
 app.get('/reviews/:id', (req, res) => {
     let ID = req.params.id;
-    let dataToSend = [];
-    
+    let dataToSend = []; 
+    let writer = [];
+    let testID = 0;
+
     mysqlConnection.query(`SELECT * ` +
     `FROM reviews WHERE restaurant_ID = '`+ID+`'`,(err,rows) => {   
+        //console.log(rows);
         if(err) throw err;
         rows.forEach( (row) => {
             dataToSend.push(row);
+            testID = row.user_ID;
+            console.log(testID);
+            //console.log(row.user_ID);
+                let sql = "SELECT `user_Name` FROM `users` WHERE `user_ID` = '"+testID+"';"
+                mysqlConnection.query(sql, function (err, result) {
+                if (err) throw err;
+                    //console.log(result);
+                    console.log(result[0]);
+                    writer.push(result.user_Name);
+                    //console.log(writer);
+                });
         });
+        
+        //console.log(row);
+        //console.log(rows[]);
+      
         res.render('./reviews.ejs', {
-            "reviews": dataToSend
+            "reviews": dataToSend,
+            "writer" : writer
         }); 
 
     });
 });
-/*mysqlConnection.query(`SELECT * ` +
-` FROM restaurants `,(err,rows) => {
-    if(err) throw err;
-  
-    rows.forEach( (row) => {
-        console.log(`${row.restaurant_Name}` + " " +  `${row.restaurant_Location}`);
-    });
-});*/
 
 /*
 // create route for our api

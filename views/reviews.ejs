@@ -9,11 +9,10 @@
         <form action="/all" method="GET">
             <button type="submit" class="btn btn-info">Back to list</button>
       <div class="row centerering">
-       
-        
             <% for(let i = 0; i < reviews.length; i++) { %>
                 <div class="card niceColors">
                     <div class="card-body">
+                        <h3 class="card-text">Author : <%=  %></h3>
                         <h4 class="card-title">Raiting: <%= reviews[i].reviewRaiting %></h4>
                         <p class="card-text">Comment: <%= reviews[i].reviewText %> </p>
              
@@ -21,10 +20,6 @@
                 </div>
                 </div>   
               <%  } %>
-          
-           
        
-  
-             
   </body>
 </html>
