@@ -35,9 +35,13 @@ console.log(process.env.CLEARDB_DATABASE_URL);
 
 const httpPort = process.env.PORT || 3001;
 // Server port
-const mysqlConnection = mysql.createConnection(
+var mysqlConnection = mysql.createConnection(
     process.env.CLEARDB_DATABASE_URL
 );
+
+mysqlConnection.on('error', function(err) {
+    console.log(err.code);
+  });
 
 
 
@@ -131,6 +135,7 @@ app.post('/login', (req, res) => {
         rows.forEach( (db) => {
            bcrypt.compare(password, db.user_Password, (err, result) => {
             if(result) {
+                console.log(process.env.JWT_KEY);
                 userAccess++;
                 console.log("rätt password och vi plussar useracess som nu är " + userAccess);
                 if(userAccess == 2) {
@@ -144,13 +149,13 @@ app.post('/login', (req, res) => {
                         expiresIn : "1h"
                     }
                     );
+                    let stringyy = "Bearer " + token;
                     return res.status(200).json({
-                        message : "you did it",
-                        token : token,
-                        tokenusername : username,
-                        tokenid : db.user_ID
+                        message : "ok it works",
+                        token : stringyy
                     });
-                    
+                    //res.redirect('./addRestaurant');
+                   
                          
                 } else if(userAccess !== 2) {
                     console.log("ops did not find you in this row"); 
@@ -215,17 +220,11 @@ app.post('/deleteUser/:userID', checkAuth, (req, res) => {
     console.log(userToDelete);
 
     let sql = "DELETE FROM `users` WHERE `user_ID` = "+userToDelete+";"
-    //let sql2 = "DELETE FROM `reviews` WHERE `user_ID` = "+idToDelete+";"
     mysqlConnection.query(sql, function (err, result) {
         if (err) throw err;
         console.log("Number of records deleted: " + result.affectedRows + " with id " + userToDelete);
     });
     res.redirect("/");
-    /*mysqlConnection.query(sql2, function (err, result) {
-        if (err) throw err;
-        console.log("Number of records deleted: " + result.affectedRows + " with id " + idToDelete);
-        res.redirect("/all");
-    });*/
 });
 
 
@@ -246,7 +245,7 @@ app.get('/reviewRestaurant', (req, res) => {
     });
 });
 
-app.get('/addRestaurant', (req, res)=>{
+app.get('/addRestaurant', (req, res)=> {
     res.render('./addRestaurant.ejs');
 });
 
@@ -255,14 +254,8 @@ app.post('/addRestaurant', (req, res)=>{
     let reslocation = req.body.reslocation;
     let restype = req.body.restype;
 
-     /*// Prepare post request
-     let dataToSend = {
-        restaurant_Name: resname,
-        restaurant_Location: reslocation,
-        restaurant_Type : restype
-    };*/
-    let sql = "INSERT INTO `restaurants` (`restaurant_Name`, `restaurant_Location`, `restaurant_Type`) VALUES ('"+resname+"', '"+reslocation+"', '"+restype+"')";
-   
+
+    let sql = "INSERT INTO `restaurants` (`restaurant_Name`, `restaurant_Location`, `restaurant_Type`) VALUES ("+mysqlConnection.escape(resname)+", "+mysqlConnection.escape(reslocation)+", "+mysqlConnection.escape(restype)+")";
     mysqlConnection.query(sql, function (err, result) {
         if (err) throw err;
         console.log("sucess");
@@ -307,7 +300,7 @@ app.get('/editRestaurant/:id', checkAuth, (req, res) => {
 });
 
 //post edit info
-app.post('/editRestaurant/:id', (req, res) => {
+app.post('/editRestaurant/:id', checkAuth, (req, res) => {
     let idToEdit = req.params.id;
     let newName = req.body.resname;
     let newLocation = req.body.reslocation;
