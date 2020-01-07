@@ -18,6 +18,9 @@ let bcrypt = require('bcryptjs');
 let fetch = require("node-fetch");
 //load bodyparser
 var bodyParser = require('body-parser')
+
+//Min egen auth-check
+const checkAuth = require('./routes/check-auth');
 // Initialize express
 let app = express();
 
@@ -67,6 +70,8 @@ mysqlConnection.connect((err) => {
 });
 // Root URL
 app.get('/all', (req, res) => {
+    let test = req.userData;
+    console.log(test);
     let dataToSend = [];
     let raitingArray = [];
     
@@ -96,73 +101,74 @@ app.get('/all', (req, res) => {
         }         
     }); 
 });
-app.get('/api', (req, res) => {
-    res.json({
-        message: 'Welcome to the Page'
-    });
-});
-
-app.post('/api/posts', verifyToken, (req, res) => {
-    jwt.verify(req.token, 'secretkey', (err, authData) => {
-        if(err) {
-            res.sendStatus(403);
-        } else {
-            res.json({
-                message: 'Post created',
-                authData
-            });
-        }
-    });
-   
-})
-
-app.post('/api/login', (req, res) => {
-    //Mock user
-    //Ska vara userinfo från form
-    const user = {
-        id: 1,
-        username : 'Jonas94',
-        password : '123'
-    }
-
-    jwt.sign({user}, 'secretkey',{ expiresIn : '30s'}, (err, token) => {
-        res.json({
-            token
-        });
-    });
-})
-
-//Format of token
-// Autherization : Bearer <acess_token>
-
-//verify token
-function verifyToken(req, res, next) {
-    //Get the auth header value
-    const bearerHeader = req.headers['authorization'];
-    // Check if bearer is undefined
-    if(typeof bearerHeader !== 'undefined') {
-        //Split at the space
-        const bearer = bearerHeader.split(' ');
-        // Get token from array
-        const bearerToken = bearer[1];
-        // Set the token
-        req.token = bearerToken;
-        // Call the next middlewear
-        next();
-    }else {
-        //Forbidden
-        res.sendStatus(403);
-    }
-}
 
 app.get('/', (req, res) => {
-    res.render('./login.ejs');
+  res.render('./login.ejs');
 });
-
-
 
 app.get('/newAccount', (req, res) => {
     res.render('./newAccount.ejs');
+});
+
+app.post('/login', (req, res) => {
+    let username = req.body.userName;
+    console.log("letar efter " + username);
+    let password = req.body.password;
+    console.log("letar efter " + password);
+    let userAccess = 0;
+    mysqlConnection.query(`SELECT user_ID, user_Name, user_Password FROM users`, (err,rows) => {   
+        if(err) throw err;
+        rows.forEach( (row) => {
+            //console.log(row.user_Name);
+           if(username == row.user_Name) {
+            userAccess++;
+            console.log("rätt username och vi plussar useracess som nu är 1");
+           } else {
+              console.log("fel username");
+           }
+        });
+        if(err) throw err;
+        rows.forEach( (db) => {
+           bcrypt.compare(password, db.user_Password, (err, result) => {
+            if(result) {
+                userAccess++;
+                console.log("rätt password och vi plussar useracess som nu är " + userAccess);
+                if(userAccess == 2) {
+                    console.log("u are now logged in");
+                    const token = jwt.sign({
+                        username : username,
+                        userID : db.user_ID
+                    }, 
+                    process.env.JWT_KEY,
+                    {
+                        expiresIn : "1h"
+                    }
+                    );
+                    return res.status(200).json({
+                        message : "you did it",
+                        token : token,
+                        tokenusername : username,
+                        tokenid : db.user_ID
+                    });
+                    
+                         
+                } else if(userAccess !== 2) {
+                    console.log("ops did not find you in this row"); 
+                    res.sendStatus(401);
+                }
+            }
+            if(err) {
+                res.sendStatus(401);
+                console.log("error");
+            }
+            });
+         
+        });
+       
+    }); 
+    
+
+  
 });
 
 app.post('/signup', (req, res) => {
@@ -178,8 +184,7 @@ app.post('/signup', (req, res) => {
               console.log("all good");
            }
         });
-    if(userExists == false)
-    {
+    if(userExists == false) {
         //hash password before saving it
         bcrypt.hash(req.body.password, 10, (err, hash) => {
             if(err) {
@@ -205,7 +210,7 @@ app.post('/signup', (req, res) => {
     
 });
 
-app.post('/deleteUser/:userID', (req, res) => {
+app.post('/deleteUser/:userID', checkAuth, (req, res) => {
     let userToDelete = req.params.userID;
     console.log(userToDelete);
 
@@ -286,7 +291,7 @@ app.post("/deleteRestaurant/:id", (req, res) => {
 });
 
 // get edit info
-app.get('/editRestaurant/:id', (req, res) => {
+app.get('/editRestaurant/:id', checkAuth, (req, res) => {
     let idToFind = req.params.id;
     console.log(idToFind);
     let dataToSend = [];
@@ -353,7 +358,6 @@ app.get('/reviews/:id', (req, res) => {
         rows.forEach( (row) => {
             dataToSend.push(row);
         });
-   
         res.render('./reviews.ejs', {
             "reviews": dataToSend
         }); 
