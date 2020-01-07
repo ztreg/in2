@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <% include ./partials/header %>
+    <% include ./partials/snow %>
+  </head>
+  <body> 
+    <div class="container centerering">
+        <form action="/all" method="GET">
+            <button type="submit" class="btn btn-info">Back to list</button>
+      <div class="row centerering">
+       
+        
+            <% for(let i = 0; i < reviews.length; i++) { %>
+                <div class="card niceColors">
+                    <div class="card-body">
+                        <h4 class="card-title">Raiting: <%= reviews[i].reviewRaiting %></h4>
+                        <p class="card-text">Comment: <%= reviews[i].reviewText %> </p>
+             
+                  </form>  
+                </div>
+                </div>   
+              <%  } %>
+          
+           
+       
+  
+             
+  </body>
+</html>

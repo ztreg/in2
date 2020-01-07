@@ -3,10 +3,10 @@
   <head>
     <% include ./partials/header %>
     <% include ./partials/snow %>
-    <% include ./partials/mainjs %>
   </head>
   <body> 
     <div class="container centerering">
+        <h1>ADMIN VIEW</h1>
       <div class="row centerering">            
         <table class="col-sm-4 centerering">
           <td>Filter restaurants
@@ -35,9 +35,7 @@
             <% for(let i = 0; i < allRestaurants.length; i++) { %>
                 <tr class="checkCat" id="<%= allRestaurants[i].restaurant_Type %>">
                   <td><form action="/reviews/<%=allRestaurants[i].restaurant_ID %>" method="GET">
-                    <button class="btn btn-info" type="submit">Reviews</button>
-                  </form>
-                  </td>
+                    <button class="btn btn-info" type="submit">Reviews</button></td>
                   
                   <td><%= allRestaurants[i].restaurant_Name %></td>
                   <td><%= allRestaurants[i].restaurant_Location %></td>

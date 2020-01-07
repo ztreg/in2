@@ -1,6 +1,30 @@
 let express = require('express');
 let router = express.Router();
 
+router.post('/addRestaurant1234', (request, response) => {
+    let db = request.db;
+    let collectionUsers = db.get('restaurants');
+
+    collectionUsers.insert({
+        "username": request.body.username,
+        "email": request.body.email,
+        "password": request.body.password,
+        "profilePicturePath": "/images/default.png",
+        "userRole": "normalUser"
+    }, (error, result) => {
+        if (error) {
+            response.send({
+                error
+            })
+            return;
+        } else {
+            response.send({
+                result: "OK"
+            });
+        }
+    });
+});
+
 /*// return password hash based on Email address.
 router.get('/getPasswordHash/:email', (request, response) => {
     let email = request.params.email;

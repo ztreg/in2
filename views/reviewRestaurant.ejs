@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <% include ./partials/header %>
+    <% include ./partials/snow %>
+  </head>
+  <body> 
+    <div class="container-fluid">
+      <div class="row">
+        <div class="card niceColors">
+            <div class="card-body">
+              <a href="/all" class="btn btn-info">Back to list</a>
+          <form action="/submitRaitings" method="post">
+            <h1>Chose a restaurant</h1>
+            <select name="chosenRestaurant">
+                <% for(let i = 0; i < allRestaurants.length; i++) { %>
+                    <option value="<%= allRestaurants[i].restaurant_Name %>"><%= allRestaurants[i].restaurant_Name %></option>
+                    <%  } %>
+                </select>
+                Raiting<select name="reviewRaiting">
+                <option value="0">0</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+                <option value="9">9</option>
+                <option value="10">10</option>
+              </select><br>
+                <textarea name="reviewText"></textarea><br>
+                <button type="submit">Submit review</button>
+          </form>  
+        </div>
+    </div>          
+     </div>
+    </div>
+  </body>
+</html>
+
