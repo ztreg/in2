@@ -85,40 +85,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 // create route for our api
 app.use('/api/apirequests', apiRouter);
 
-//connect to database
-/*mysqlConnection.connect((err) => {
-    //console.log(mysqlConnection);
-    if (err) {
-        console.log('Error connecting to Db');
-        return;
-    }
-    console.log('Connection established at port ' + httpPort);
-
-});*/
-/*var connection;
-  
-function handleDisconnect() {
-  connection = mysqlConnection;                    // Recreate the connection, since
-                                                  // the old one cannot be reused.
-
-  connection.connect(function(err) {              // The server is either down
-    if(err) {                                     // or restarting (takes a while sometimes).
-      console.log('error when connecting to db:', err);
-      setTimeout(handleDisconnect, 2000); // We introduce a delay before attempting to reconnect,
-    }                                     // to avoid a hot loop, and to allow our node script to
-  });                                     // process asynchronous requests in the meantime.
-                                          // If you're also serving http, display a 503 error.
-  connection.on('error', function(err) {
-    console.log('db error', err);
-    if(err.code === 'PROTOCOL_CONNECTION_LOST') { // Connection to the MySQL server is usually
-      handleDisconnect();                         // lost due to either server restart, or a
-    } else {                                      // connnection idle timeout (the wait_timeout
-      throw err;                                  // server variable configures this)
-    }
-  });
-}
-
-handleDisconnect();*/
 
 app.get('/redirectroute', (req, res) => {
     res.redirect('/restaurants');
@@ -307,11 +273,7 @@ app.post('/login', async (req, res) => {
         });
 
     });
-
-
-
 });
-
 
 app.get('/logout', (req, res) => {
     res.clearCookie('token', {
@@ -363,47 +325,62 @@ app.get('/addRestaurant', checkAuth, (req, res) => {
 });
 
 
-
-
-
-
-
-
 //Submit the raitings to reviews table
-app.post('/submitRaitings/', checkAuth, (req, res) => {
-    let currentUser = req.userData.userID;
+app.post('/reviews', checkAuth, (req, res) => {
+    let currentUser = req.userData.username;
+    console.log(currentUser);
     let chosenRestaurant = req.body.chosenRestaurant;
     let reviewRaiting = req.body.reviewRaiting;
     let reviewText = req.body.reviewText;
-    let restID;
-    //First we need the ID of the restaurant
-    let sql = "SELECT `restaurant_ID` FROM `restaurants` WHERE `restaurant_Name` = '" + chosenRestaurant + "';"
-    mysqlConnection.query(sql, function (err, result) {
-        if (err) throw err;
-        restID = result[0].restaurant_ID;
-        //Now we can add the review with the restaurantID
-        let sql2 = "INSERT INTO `reviews` (`reviewRestName`, `reviewText`, `reviewRaiting`, `restaurant_ID`, `user_ID`) VALUES ('" + chosenRestaurant + "', '" + reviewText + "', '" + reviewRaiting + "', '" + restID + "', '" + currentUser + "')";
-        mysqlConnection.query(sql2, function (err, result) {
-            if (err) throw err;
-            console.log("la till review för restaurang med id " + restID);
-            res.redirect("/restaurants");
-        });
+
+    let dataToSend = {
+        currentUser : currentUser,
+        chosenRestaurant : chosenRestaurant,
+        reviewRaiting : reviewRaiting,
+        reviewText : reviewText
+    };
+    console.log("nu skickar vi fetch");
+    fetch(`${apiURL}/reviews`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(dataToSend)
+    }).then(response => response.json()).then(data => {
+        res.redirect('/redirectroute');
     });
+
+    
 });
 
 //Ska inte behöva vara inloggad som admin för att se andras reviews
-app.get('/reviews/:id', async (req, res) => {
+app.get('/reviews/:id', checkAuth, async (req, res) => {
     let ID = req.params.id;
+    console.log("logged in as " + req.userData.username);
 
     let result = await fetch(`${apiURL}/reviews/${ID}`)
     .then((response => response.json()));
    
     res.render('./reviews.ejs', {
-        "reviews": result.result1,
-        "writer": result.result2
+        "reviews": result.result1
     });
 
        
+});
+
+app.post('/deleteReview/:id', (req, res) => {
+    let reviewID = req.params.id;
+    let dataToSend = {
+        reviewID : reviewID
+    };
+    fetch(`${apiURL}/deleteReview`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(dataToSend)
+    }).then(response => response.json());
+    res.redirect('/restaurants');
 });
 
 /*
