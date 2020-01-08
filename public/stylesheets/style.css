@@ -27,3 +27,9 @@ table {
   .hide {
     display: none;
   }
+
+  .info{
+    background-color: lightskyblue;
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    font-size: 1.2em;
+  }

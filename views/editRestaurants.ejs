@@ -9,13 +9,13 @@
       <div class="row">            
           <div class="card niceColors">
             <div class="card-body">
-          <form id="formEditUser" method="post"  action="/editRestaurant/<%= theRestaurant[0].restaurant_ID %>">
-            <h6 class="card-text">Edit restaurant Name: <input type="text" value="<%= theRestaurant[0].restaurant_Name %>" name="resname" /> </h6> 
-            <h6 class="card-text">Edit restaurant Location: <input type="text" value="<%= theRestaurant[0].restaurant_Location %>" name="resloc" /> </h6>
-            <h6 class="card-text">Edit restaurant Type: <input type="text" name="restype" value="<%= theRestaurant[0].restaurant_Type %>"> </h6>  
+          <form id="formEditUser" method="post" action="/editRestaurants/<%= theRestaurant.restaurant_ID %>">
+            <h6 class="card-text">Edit restaurant Name: <input type="text" value="<%= theRestaurant.restaurant_Name %>" name="resname" /> </h6> 
+            <h6 class="card-text">Edit restaurant Location: <input type="text" value="<%= theRestaurant.restaurant_Location %>" name="resloc" /> </h6>
+            <h6 class="card-text">Edit restaurant Type: <input type="text" name="restype" value="<%= theRestaurant.restaurant_Type %>" name="restype"> </h6>  
             
            <button type="submit" class="btn btn-primary">Submit Changes</button> 
-           <a href="/all" class="btn btn-info">Back to list</a> 
+           <a href="/restaurants" class="btn btn-info">Back to list</a> 
           </form>
         </div>
       </div>

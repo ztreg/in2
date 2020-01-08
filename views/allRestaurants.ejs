@@ -8,9 +8,13 @@
   <body> 
     <div class="container centerering">
       <div class="row centerering">     
-        <div>
-          <% include ./partials/logout %>   
-         </div>
+        <div class="col-sm-2 info"><% include ./partials/logout %>
+          Logged in as : <%= currentUser.username %>
+          <p>You have access to reviewing restaurants</p>
+          <form action="/deleteUser<%= currentUser.userID %>" method="POST">
+          <button type="submit" class="btn btn-danger">Delete account</button>
+          </form>
+        </div>
         <table class="col-sm-4 centerering">
           <td>Filter restaurants
             <select id="Category">
@@ -23,6 +27,8 @@
         <button type="button" id="catBtn">Filter</button>
         </td>
           <td><a href="/reviewRestaurant" class="btn btn-secondary">Review a restaurant</a></td>
+          <td></td>
+          <td> </td>
           <tr>
             <th>Show reviews</th>
             <th>Name</th>
@@ -30,8 +36,6 @@
             <th>Type</th>
             <th>Average raiting</th>
             <th>Number of reviews</th>
-            <th>Action</th>
-            <th>Action</th>
           </tr>
  
             <% for(let i = 0; i < allRestaurants.length; i++) { %>

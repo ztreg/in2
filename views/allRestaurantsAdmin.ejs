@@ -7,7 +7,12 @@
   </head>
   <body> 
     <div class="container centerering">
-      <div class="row centerering">            
+      <div class="row centerering">         
+        <div class="col-sm-2 info"><% include ./partials/logout %>
+          Logged in as : <%= currentUser %>
+          <p>You have can do anything your heart desires</p>
+          <p>You may not delete the admin account, sry</p>
+        </div>   
         <table class="col-sm-4 centerering">
           <td>Filter restaurants
             <select id="Category">
@@ -28,8 +33,8 @@
             <th>Type</th>
             <th>Average raiting</th>
             <th>Number of reviews</th>
-            <th>Action</th>
-            <th>Action</th>
+            <th>Admin</th>
+            <th>Admin</th>
           </tr>
  
             <% for(let i = 0; i < allRestaurants.length; i++) { %>
@@ -45,12 +50,12 @@
                   <td><%= raitings[i] %></td>
                   <td>tbt</td>
                   <td>
-                    <form action="/editRestaurant/<%= allRestaurants[i].restaurant_ID %>" method="GET">
+                    <form action="/editRestaurants/<%= allRestaurants[i].restaurant_ID %>" method="GET">
                     <button type="submit" class="btn btn-secondary">Edit</button>
                     </form>
                   </td>
                   <td>
-                    <form action="/deleteRestaurant/<%= allRestaurants[i].restaurant_ID %>" method="POST">
+                    <form action="/restaurants/<%= allRestaurants[i].restaurant_ID %>" method="POST">
                   <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this restaurant?')">Delete</button>
                   </form>
                 </td>
