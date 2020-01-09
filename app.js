@@ -33,7 +33,6 @@ require('dotenv').config({
 
 console.log(process.env.CLEARDB_DATABASE_URL);
 
-
 var mysqlConnection = mysql.createPool(
     process.env.CLEARDB_DATABASE_URL
 );
@@ -44,27 +43,11 @@ console.log(httpPort);
 // URL to api.
 let apiURL = `http://localhost:${httpPort}/api/apirequests`;
 
-// Create DB connection
-/*var mysqlConnection = mysql.createConnection(
-    process.env.CLEARDB_DATABASE_URL
-);*/
 // make it possible to use database connection in requests.
 app.use((request, response, next) => {
     request.db = mysqlConnection;
     next();
 });
-
-/*var connection = mysqlConnection;
-var del = connection._protocol._delegateError;
-connection._protocol._delegateError = function(err, sequence){
-  if (err.fatal) {
-    console.trace('fatal error: ' + err.message);
-  }
-  return del.call(this, err, sequence);
-};*/
-
-  
-
 
 // view engine setup
 app.use(express.static("views"));
@@ -85,7 +68,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 // create route for our api
 app.use('/api/apirequests', apiRouter);
 
-
 app.get('/redirectroute', (req, res) => {
     res.redirect('/restaurants');
 });
@@ -97,21 +79,41 @@ app.get('/restaurants', checkAuth, async (req, res) => {
     console.log(req.userData.username);
 
     let result = await fetch(`${apiURL}/restaurants`)
-        .then((response => response.json()));
+        .then(response => response.json());
+    let allTypes = await fetch(`${apiURL}/allTypes`)
+        .then(response => response.json());
 
     if (currentUser.username == "admin") {
         res.render('./allRestaurantsAdmin.ejs', {
-            "allRestaurants": result.result1,
-            "raitings": result.result2,
-            "currentUser": currentUser.username
+            "allRestaurants": result.result,
+            "currentUser": currentUser.username,
+            "allTypes" : allTypes.result
         });
     } else {
         res.render('./allRestaurants.ejs', {
-            "allRestaurants": result.result1,
-            "raitings": result.result2,
-            "currentUser": currentUser.username
+            "allRestaurants": result.result,
+            "currentUser": currentUser.username,
+            "allTypes" : allTypes.result
         });
     }
+});
+
+// top 10 raited resaurants URL
+app.get('/top10', checkAuth, async (req, res) => {
+  
+    let currentUser = req.userData;
+    console.log(req.userData.username);
+
+    let result = await fetch(`${apiURL}/top10`)
+        .then((response => response.json()));
+    let allTypes = await fetch(`${apiURL}/allTypes`)
+        .then(response => response.json());
+    
+        res.render('./top10.ejs', {
+            "allRestaurants": result.result,
+            "currentUser" : currentUser.username,
+            "allTypes" : allTypes.result
+        });
 });
 
 //Add new restaurant
@@ -203,7 +205,11 @@ app.get('/signup', (req, res) => {
 //signup post
 app.post('/signup', (req, res) => {
     let username = req.body.username;
+    let db = req.db;
     let password = req.body.password;
+
+    db.escape(password);
+
     let dataToSend = {
         username : username,
         password : password
@@ -215,64 +221,48 @@ app.post('/signup', (req, res) => {
         },
         body: JSON.stringify(dataToSend)
     }).then(response => response.json());
+    res.redirect('/login');
 });
 
 //login post
-app.post('/login', async (req, res) => {
+app.post('/login', (req, res) => {
     let username = req.body.userName;
     let password = req.body.password;
-    console.log(username + password);
-    let userAccess = 0;
-    await mysqlConnection.query(`SELECT user_ID, user_Name, user_Password FROM users`, (err, rows) => {
+    let db = req.db;
+    db.query(`SELECT user_ID, user_Name, user_Password FROM users`, (err, rows) => {
         if (err) throw err;
         rows.forEach((row) => {
-            //console.log(row.user_Name);
             if (username == row.user_Name) {
-                console.log(row.user_Name + username);
-                userAccess++;
-                console.log(userAccess);
-            } else {
-                console.log("fel username");
+                bcrypt.compare(password, row.user_Password, (err, result) => {
+                if (result) {
+                    console.log("im in");
+                    const token = jwt.sign({
+                            username: username,
+                            userID: row.user_ID
+                        },
+                        process.env.JWT_KEY, {
+                            expiresIn: "1h"
+                        }
+                    );
+                    console.log("set token");
+                    
+                    //RESPONDING AS A COOKIE WAS THE WAY
+                    res.cookie('token', token, {maxAge: 500 * 1000,httpOnly: true});   
+                    res.redirect('/restaurants');
+                    }
+                    if(err) {
+                        res.sendStatus(404).json({
+                            message : "failed login"
+                        })
+                    }
+                });
             }
         });
-        if (err) throw err;
-        rows.forEach((db) => {
-            bcrypt.compare(password, db.user_Password, (err, result) => {
-                if (result) {
-                    userAccess++;
-                    console.log(userAccess);
-                    if (userAccess <= 2) {
-                        console.log("im in");
-                        const token = jwt.sign({
-                                username: username,
-                                userID: db.user_ID
-                            },
-                            process.env.JWT_KEY, {
-                                expiresIn: "1h"
-                            }
-                        );
-                        console.log("set token");
-                        //RESPONDING AS A COOKIE WAS THE WAY
-                        res.cookie('token', token, {maxAge: 500 * 1000,httpOnly: true});
-                        res.redirect('/restaurants');
-                    
 
-                    } if (userAccess !== 2) {
-                        console.log("ops did not fiiiiiind you in the database");
-                        res.sendStatus(401).json({
-                            message : "failed login"
-                        });
-                    }
-                }
-                if (err) {
-                    res.sendStatus(401);
-                    console.log("an error");
-                }
-            });
-
-        });
+           
 
     });
+    //res.redirect('/restaurants');
 });
 
 app.get('/logout', (req, res) => {
@@ -326,7 +316,7 @@ app.get('/addRestaurant', checkAuth, (req, res) => {
 
 
 //Submit the raitings to reviews table
-app.post('/reviews', checkAuth, (req, res) => {
+app.post('/reviews', checkAuth, async (req, res) => {
     let currentUser = req.userData.username;
     console.log(currentUser);
     let chosenRestaurant = req.body.chosenRestaurant;
@@ -340,16 +330,15 @@ app.post('/reviews', checkAuth, (req, res) => {
         reviewText : reviewText
     };
     console.log("nu skickar vi fetch");
-    fetch(`${apiURL}/reviews`, {
+    await fetch(`${apiURL}/reviews`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify(dataToSend)
-    }).then(response => response.json()).then(data => {
-        res.redirect('/restaurants');
-    });
-
+    }).then(response => response.json().then(data => {
+        res.redirect('/redirectroute');
+    }));;
     
 });
 
@@ -363,7 +352,7 @@ app.get('/reviews/:id', checkAuth, async (req, res) => {
     .then((response => response.json()));
    
     res.render('./reviews.ejs', {
-        "reviews": result.result1,
+        "reviews": result.result,
         "currentUser" : currentUser
     });
 

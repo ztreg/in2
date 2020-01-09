@@ -13,25 +13,26 @@
           <p>You have can do anything your heart desires</p>
           <p>You may not delete the admin account, sry</p>
         </div>   
-        <table class="col-sm-4 centerering">
+        <table class="col-sm-4">
           <td>Filter restaurants
             <select id="Category">
               <option value="None">None</option>
-            <% for(let i = 0; i < allRestaurants.length; i++) { %>
-                  <option value="<%= allRestaurants[i].restaurant_Type %>">
-                    <%= allRestaurants[i].restaurant_Type %></option>  
+            <% for(let i = 0; i < allTypes.length; i++) { %>
+                  <option value="<%= allTypes[i].restaurant_Type %>">
+                    <%= allTypes[i].restaurant_Type %></option>  
             <% } %>                                                                                                                  } %>
           </select>
         <button type="button" id="catBtn">Filter</button>
         </td>
           <td><a href="/addRestaurant" class="btn btn-primary">Add new restaurant</a></td>
           <td><a href="/reviewRestaurant" class="btn btn-secondary">Review a restaurant</a></td>
-          <td>Update page for better average raiting</td>
+          <td><a href="/restaurants" class="btn btn-primary">All restaurants</a></td>
+          <td><a href="/top10" class="btn btn-primary">Top raited restaurants</a></td>
           <tr>
             <th>Show reviews</th>
             <th>Name</th>
             <th>Location</th>
-            <th>Type</th>
+            <th id="type">Type</th>
             <th>Average raiting</th>
             <th>Number of reviews</th>
             <th>Admin</th>
@@ -48,8 +49,8 @@
                   <td><%= allRestaurants[i].restaurant_Name %></td>
                   <td><%= allRestaurants[i].restaurant_Location %></td>
                   <td><%= allRestaurants[i].restaurant_Type %></td>
-                  <td><%= raitings[i] %></td>
-                  <td>tbt</td>
+                  <td><%= allRestaurants[i].topraited %></td>
+                  <td><%= allRestaurants[i].nmrOfReviews %></td>
                   <td>
                     <form action="/editRestaurants/<%= allRestaurants[i].restaurant_ID %>" method="GET">
                     <button type="submit" class="btn btn-secondary">Edit</button>

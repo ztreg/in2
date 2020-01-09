@@ -8,6 +8,7 @@ module.exports = (req, res, next) => {
         return next();
     }
     catch(error) {
+        console.log("errzz")
         res.redirect('/login');
     }
     return next();

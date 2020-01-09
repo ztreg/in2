@@ -3,39 +3,78 @@ let router = express.Router();
 //authorization-check
 const checkAuth = require('./check-auth');
 let bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 
 //Returns 2 objects, one with all the restaurants and one with the AVG raiting for them
 router.get('/restaurants', (req, res) => {
     let db = req.db;
     
-    let dataToSend = [];
-    let raitingArray = [];
-
-    db.query(`SELECT * ` +
-    `FROM restaurants`,(err,rows) => {   
-        if(err) throw err;
-        rows.forEach( (row) => {
-            dataToSend.push(row);
-        });
-        //Find all reviews(raitings) with the same id that the restaurant has and add it to a array
-        //After that, send the array to the view
-        for(let i = 0; i < dataToSend.length; i++) {
-            let AVGrate = "SELECT AVG(reviewRaiting) as AverageRaiting FROM reviews WHERE restaurant_ID = '"+dataToSend[i].restaurant_ID+"';"
-            db.query(AVGrate, function (err, result) {
-                if (err) throw err;
-                raitingArray.push(result[0].AverageRaiting);
-                if(dataToSend[i+1] == null) {
-                    let responseObject = {
-                        result1 : dataToSend,
-                        result2 : raitingArray
-                    };
-                    res.send(responseObject);
-                }
-            }); 
-        }         
-    }); 
+    let sql = `SELECT COUNT(*) as nmrOfReviews, r.restaurant_ID, r.restaurant_Name, r.restaurant_Location, r.restaurant_Type, 
+    ROUND(SUM(rev.reviewRaiting) / COUNT(rev.restaurant_ID),1) as topraited
+    FROM restaurants r
+    INNER JOIN reviews rev ON r.restaurant_ID = rev.restaurant_ID
+    GROUP BY r.restaurant_ID
+    ORDER BY r.restaurant_Name ASC`
     
+    let sql2 = `SELECT * FROM restaurants`
+    let alivarint = 0;
+    let newobject = {};
+   
+    db.query(sql, function(err, result) {
+        if(err) throw (err);
+        db.query(sql2, (err, result2) => {
+            if(err) throw(err);
+            for(let i = 0; i < result2.length; i++) {
+                for(let x = 0; x < result.length; x++) {
+                    if(result2[i].restaurant_ID == result[x].restaurant_ID) {
+                        console.log("test");
+                        break;
+                    }
+                    else {
+                        alivarint++;
+                        if(alivarint == result.length) {
+                            newobject.nmrOfReviews = 0;
+                            newobject.restaurant_ID = result2[i].restaurant_ID;
+                            newobject.restaurant_Name = result2[i].restaurant_Name;
+                            newobject.restaurant_Location = result2[i].restaurant_Location;
+                            newobject.restaurant_Type = result2[i].restaurant_Type;
+                            newobject.topraited = 0;
+                            result.push(newobject);
+                            newobject = {};
+                            if(result.length == result2.length){
+                                result.sort((a, b) => a.restaurant_Name.localeCompare(b.restaurant_Name));
+                                result.sort(function(a, b){return a - b});
+                                let responseObject = {
+                                    result : result
+                                };
+                                //console.log(responseObject);
+                                res.send(responseObject);
+                            }
+                            break;
+                            
+                        }
+                    }
+                }
+                alivarint = 0;
+            }
+        });
+       
+    });
+   
+});
+
+router.get('/allTypes', (req, res) => {
+    let db = req.db;
+
+    let sql = `SELECT DISTINCT(restaurant_Type) FROM restaurants ORDER BY restaurant_Type ASC;`
+    db.query(sql, (err, result) => {
+        if(err) throw (err);
+        let responseObject = {
+            result : result
+        };
+        res.send(responseObject);
+    });
 });
 
 //Add new restaurant with info given in body
@@ -87,7 +126,6 @@ router.get('/editRestaurant/:id', (req, res) => {
         let responseObject = {
             result : result[0],
         };
-        
         res.send(responseObject);
     });
 
@@ -129,7 +167,6 @@ router.post('/signup', (req, res) => {
             }
         });
         if (userExists == false) {
-            //hash password before saving it
             bcrypt.hash(req.body.password, 10, (err, hash) => {
                 if (err) {
                     return res.status(500).json({
@@ -138,11 +175,13 @@ router.post('/signup', (req, res) => {
                 } else {
                     let username = req.body.username;
                     let password = hash;
-                    let sql = "INSERT INTO `users` (`user_Name`, `user_Password`) VALUES ('" + username + "', '" + password + "')";
+                    let sql = "INSERT INTO `users` (`user_Name`, `user_Password`) VALUES (" + db.escape(username) + ", '" + password + "')";
                     db.query(sql, function (err, result) {
                         if (err) throw err;
                         console.log("user added to database with username : " + username);
-                        res.redirect("/");
+                        res.sendStatus(201).send({
+                            response : "OK"
+                        });
                     });
                 }
             })
@@ -153,22 +192,32 @@ router.post('/signup', (req, res) => {
     });
 });
 
+
 //Deletes the user with the id from body
 router.delete('/user', (req, res) => {
     let db = req.db;
     let userToDelete = req.body.userToDelete;
-
-    let sql = "DELETE FROM `users` WHERE `user_ID` = " + userToDelete + ";"
-    db.query(sql, function (err, result) {
+    
+    let sql1 = "SELECT user_Name FROM users WHERE `user_ID` = " + db.escape(userToDelete) + ";"
+    db.query(sql1, function (err, result) {
         if (err) throw err;
-        console.log("Number of records deleted: " + result.affectedRows + " with id " + userToDelete);
+            console.log("Number of records deleted: " + result.affectedRows + " with id " + userToDelete);
+            let sql2 = "DELETE FROM `users` WHERE `user_ID` = " + db.escape(userToDelete) + ";"
+            db.query(sql2, function (err, result2) {
+                if (err) throw err;
+                console.log("Number of user deleted: " + result2.affectedRows + " with id " + userToDelete);
+                let sql3 = "DELETE FROM `reviews` WHERE `WHERE` user_Name = "+ db.escape(result) +";"
+                db.query(sql3, function (err, result3) {
+                    if (err) throw err;
+                    console.log("Number from reviews records deleted: " + result3.affectedRows + " with id " + userToDelete);
+                });
+            });
     });
     res.redirect("/");
 
 });
 
 router.get('/reviews/:id',  (req, res) => {
-
     let db = req.db;
     let ID = req.params.id;
     let dataToSend = [];
@@ -181,12 +230,11 @@ router.get('/reviews/:id',  (req, res) => {
         for(let i = 0; i < rows.length; i++) {
             dataToSend.push(rows[i]);
             testID = dataToSend[i].user_ID;
-            console.log("Id som har skrivit review: " +testID);
-            //console.log(user_Name);     
+            console.log("Id som har skrivit review: " +testID);   
         }
 
         let responseObject = {
-            result1 : dataToSend
+            result : dataToSend
         };
         res.send(responseObject);
     });
@@ -200,7 +248,6 @@ router.post('/reviews', (req, res) => {
     let reviewText = req.body.reviewText;
     let restID;
     //First we need the ID of the restaurant
-  
     let sql = "SELECT `restaurant_ID` FROM `restaurants` WHERE `restaurant_Name` = " + db.escape(chosenRestaurant)+ ";"
     db.query(sql, function (err, result) {
         if (err) throw err;
@@ -210,9 +257,10 @@ router.post('/reviews', (req, res) => {
         db.query(sql2, function (err, result) {
             if (err) throw err;
             console.log("la till review för restaurang med id " + restID + " " + result);
-            console.log("skickar jag tillbaka");
-        });
-       
+        });  
+    });
+    return res.status(201).send({
+        response : "OK"
     });
 });
 
@@ -225,8 +273,34 @@ router.delete('/deleteReview', (req, res) => {
     db.query(sql, function (err, result) {
         if (err) throw err;
         console.log("Number of records deleted: " + result.affectedRows + " with id " + id);
+        let sql3 = "UPDATE `restaurants` SET `nmrOfReviews` = 'nmrOfReviews + 1' WHERE `restaurant_ID` = "+db.escape(id)+";"
+        db.query(sql3, function (err, result) {
+            if (err) throw err;
+            console.log("tog bort 1 review för restaurang med id " + id + " " + result);
+        });
     });
  
+});
+
+router.get('/top10', (req, res) => {
+    let db = req.db;
+
+    let sql = `SELECT COUNT(*) as nmrOfReviews, r.restaurant_ID, r.restaurant_Name, r.restaurant_Location, r.restaurant_Type,  SUM(rev.reviewRaiting) / COUNT(rev.restaurant_ID) as topraited
+    FROM restaurants r
+    INNER JOIN reviews rev ON r.restaurant_ID = rev.restaurant_ID
+    GROUP BY r.restaurant_ID
+    ORDER BY topraited DESC
+    LIMIT 0, 10`
+
+    db.query(sql, function(err, result){
+        if (err) throw (err);
+        console.log(result);
+        let responseObject = {
+            result : result
+        };
+        res.send(responseObject);
+    });
+    
 });
 
 module.exports = router;

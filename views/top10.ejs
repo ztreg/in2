@@ -20,7 +20,7 @@
             <select id="Category">
               <option value="None">None</option>
             <% for(let i = 0; i < allTypes.length; i++) { %>
-                  <option value="<%= allRestaurants[i].restaurant_Type %>">
+                  <option value="<%= allTypes[i].restaurant_Type %>">
                     <%= allTypes[i].restaurant_Type %></option>  
             <% } %>                                                                                                                  } %>
           </select>
