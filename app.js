@@ -40,7 +40,7 @@ var mysqlConnection = mysql.createPool(
 
 // Server port
 const httpPort = process.env.PORT || 3001;
-
+console.log(httpPort);
 // URL to api.
 let apiURL = `http://localhost:${httpPort}/api/apirequests`;
 
@@ -347,7 +347,7 @@ app.post('/reviews', checkAuth, (req, res) => {
         },
         body: JSON.stringify(dataToSend)
     }).then(response => response.json()).then(data => {
-        res.redirect('/redirectroute');
+        res.redirect('/restaurants');
     });
 
     
@@ -356,13 +356,15 @@ app.post('/reviews', checkAuth, (req, res) => {
 //Ska inte behöva vara inloggad som admin för att se andras reviews
 app.get('/reviews/:id', checkAuth, async (req, res) => {
     let ID = req.params.id;
+    let currentUser = req.userData.username;
     console.log("logged in as " + req.userData.username);
 
     let result = await fetch(`${apiURL}/reviews/${ID}`)
     .then((response => response.json()));
    
     res.render('./reviews.ejs', {
-        "reviews": result.result1
+        "reviews": result.result1,
+        "currentUser" : currentUser
     });
 
        

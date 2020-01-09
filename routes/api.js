@@ -21,7 +21,7 @@ router.get('/restaurants', (req, res) => {
         //Find all reviews(raitings) with the same id that the restaurant has and add it to a array
         //After that, send the array to the view
         for(let i = 0; i < dataToSend.length; i++) {
-            let AVGrate = "SELECT AVG(reviewRaiting) as 'AverageRaiting' FROM reviews WHERE restaurant_ID = '"+dataToSend[i].restaurant_ID+"';"
+            let AVGrate = "SELECT AVG(reviewRaiting) as AverageRaiting FROM reviews WHERE restaurant_ID = '"+dataToSend[i].restaurant_ID+"';"
             db.query(AVGrate, function (err, result) {
                 if (err) throw err;
                 raitingArray.push(result[0].AverageRaiting);
@@ -200,7 +200,7 @@ router.post('/reviews', (req, res) => {
     let reviewText = req.body.reviewText;
     let restID;
     //First we need the ID of the restaurant
-    console.log("nu tar vi emot fetch");
+  
     let sql = "SELECT `restaurant_ID` FROM `restaurants` WHERE `restaurant_Name` = " + db.escape(chosenRestaurant)+ ";"
     db.query(sql, function (err, result) {
         if (err) throw err;
@@ -209,12 +209,10 @@ router.post('/reviews', (req, res) => {
         let sql2 = "INSERT INTO `reviews` (`reviewRestName`, `reviewText`, `reviewRaiting`, `restaurant_ID`, `userName`) VALUES (" +db.escape(chosenRestaurant)+ ", " + db.escape(reviewText)+ ", " + db.escape(reviewRaiting)+ ", " + db.escape(restID)+ ", "+db.escape(currentUser)+")";
         db.query(sql2, function (err, result) {
             if (err) throw err;
-            console.log("la till review för restaurang med id " + restID);
-            let responseObject = {
-                result : dataToSend
-            };
-            res.send(responseObject);
+            console.log("la till review för restaurang med id " + restID + " " + result);
+            console.log("skickar jag tillbaka");
         });
+       
     });
 });
 

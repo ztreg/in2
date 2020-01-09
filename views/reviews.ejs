@@ -16,10 +16,12 @@
                         <h3 class="card-text">Author : <%= reviews[i].userName %></h3>
                         <h4 class="card-title">Raiting: <%= reviews[i].reviewRaiting %></h4>
                         <p class="card-text">Comment: <%= reviews[i].reviewText %> </p>
-                      
-               <form action="/deleteReview/<%= reviews[i].review_ID %>" method="POST">
-                <button type="submit" class="btn btn-danger">Delete review</button>
-               </form>
+                      <% if(currentUser == "admin") {%>
+                        <form action="/deleteReview/<%= reviews[i].review_ID %>" method="POST">
+                          <button type="submit" class="btn btn-danger">Delete review</button>
+                         </form>
+                    <%  } %>
+               
                 </div>
                 </div>   
               <%  } %>
