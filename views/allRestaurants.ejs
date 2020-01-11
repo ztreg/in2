@@ -9,18 +9,18 @@
     <div class="container centerering">
       <div class="row centerering">     
         <div class="col-sm-2 info"><% include ./partials/logout %>
-          Logged in as : <%= currentUser %>
+          Logged in as <%= currentUser %>
           <p>You have access to reviewing restaurants</p>
           <form action="/deleteUser<%= currentUser.userID %>" method="POST">
           <button type="submit" class="btn btn-danger">Delete account</button>
           </form>
         </div>
-        <table class="col-sm-4">
+        <table class="col-sm-4 table table-striped test">
           <td>Filter restaurants
             <select id="Category">
               <option value="None">None</option>
             <% for(let i = 0; i < allTypes.length; i++) { %>
-                  <option value="<%= allRestaurants[i].restaurant_Type %>">
+                  <option value="<%= allTypes[i].restaurant_Type %>">
                     <%= allTypes[i].restaurant_Type %></option>  
             <% } %>                                                                                                                  } %>
           </select>

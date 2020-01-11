@@ -1,21 +1,8 @@
-table {
-    font-family: arial, sans-serif;
-    border-collapse: collapse;
-    width: 100%;
-    background-color: lightskyblue;
-  }
-  
-  td, th {
-    border: 1px solid black;
-    text-align: left;
-    padding: 8px;
-  }
-  
-  tr:nth-child(even) {
-    background-color: #dddddd;
-  }
+.test {
+  background-color: white;
+}
 
-  .centerering {
+ .centerering {
     margin: 0 auto;
     padding: 20px;
   }
@@ -32,4 +19,7 @@ table {
     background-color: lightskyblue;
     font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
     font-size: 1.2em;
+    position: fixed;
+    top: 0;
+    left: 0;
   }

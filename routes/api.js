@@ -33,6 +33,7 @@ router.get('/restaurants', (req, res) => {
                     }
                     else {
                         alivarint++;
+                        console.log(alivarint + " ska vara " + result.length);
                         if(alivarint == result.length) {
                             newobject.nmrOfReviews = 0;
                             newobject.restaurant_ID = result2[i].restaurant_ID;
@@ -41,14 +42,16 @@ router.get('/restaurants', (req, res) => {
                             newobject.restaurant_Type = result2[i].restaurant_Type;
                             newobject.topraited = 0;
                             result.push(newobject);
+                            console.log("in first if");
                             newobject = {};
                             if(result.length == result2.length){
+                                console.log("in second if");
                                 result.sort((a, b) => a.restaurant_Name.localeCompare(b.restaurant_Name));
                                 result.sort(function(a, b){return a - b});
                                 let responseObject = {
                                     result : result
                                 };
-                                //console.log(responseObject);
+                                console.log(responseObject);
                                 res.send(responseObject);
                             }
                             break;
@@ -179,7 +182,7 @@ router.post('/signup', (req, res) => {
                     db.query(sql, function (err, result) {
                         if (err) throw err;
                         console.log("user added to database with username : " + username);
-                        res.sendStatus(201).send({
+                       return res.status(201).send({
                             response : "OK"
                         });
                     });

@@ -68,6 +68,10 @@ app.use(express.static(path.join(__dirname, 'public')));
 // create route for our api
 app.use('/api/apirequests', apiRouter);
 
+app.get('/', (req, res) => {
+    res.redirect('/login');
+});
+
 app.get('/redirectroute', (req, res) => {
     res.redirect('/restaurants');
 });
@@ -220,8 +224,11 @@ app.post('/signup', (req, res) => {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify(dataToSend)
-    }).then(response => response.json());
-    res.redirect('/login');
+    }).then(response => response.json()).then(data => {
+        console.log("redirectar nu");
+        res.redirect('/login');
+    });
+   
 });
 
 //login post
